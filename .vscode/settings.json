@@ -1,0 +1,5 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./serde-redis-stream-interface/Cargo.toml"
+    ]
+}

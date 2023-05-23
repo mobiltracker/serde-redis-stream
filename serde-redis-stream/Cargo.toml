@@ -1,9 +1,17 @@
+[package]
+name = "serde-redis-stream"
+version = "0.0.1"
+authors = ["mlcruz1 <mlcruz@inf.ufrgs.br>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
 [dependencies]
 redis = "0.23.0"
 serde = "1.0"
 syn = "2"
 quote = "1"
 darling = "0.20"
+serde-redis-stream-interface = {path = "../serde-redis-stream-interface"}
 
 
 [lib]
