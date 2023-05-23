@@ -5,6 +5,7 @@ use serde_redis_stream_interface::RedisStreamSerializable;
 struct Foobar {
     name: String,
     age: i64,
+    #[serialize = "bincode"]
     lat: f64,
 }
 

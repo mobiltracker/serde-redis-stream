@@ -8,11 +8,12 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 redis = "0.23.0"
 serde = "1.0"
-syn = "2"
+syn = {version = "2", flags = ["full"]}
 quote = "1"
 darling = "0.20"
-serde-redis-stream-interface = {path = "../serde-redis-stream-interface"}
+bincode = "1"
 
+serde-redis-stream-interface = {path = "../serde-redis-stream-interface"}
 
 [lib]
 proc-macro = true
