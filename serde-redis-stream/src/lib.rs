@@ -18,6 +18,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
         .map(|field| {
             let f_ident = field.ident.expect("struct fields must have ident");
             let f_lit = f_ident.to_string();
+            
             let attrs = field.attrs.iter().find(|a| match &a.meta {
                 syn::Meta::NameValue(nv) => {
                     &nv.path.get_ident().unwrap().to_string() == "serialize"
@@ -45,11 +46,20 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             cmd.arg(encoded);
                         )
                     }
+                    "json" => {
+                        quote!(
+                            let encoded = serde_json::to_string(&self.#f_ident).expect("Failed to serialize to json");
+                            cmd.arg(#f_lit);
+                            cmd.arg(encoded);
+                        )
+                    }
                     _ => panic!("Invalid serialization method {}", serialization_method),
                 }
             } else {
-                quote!(cmd.arg(#f_lit);
-                cmd.arg(&self.#f_ident);)
+                quote!(
+                cmd.arg(#f_lit);
+                cmd.arg(&self.#f_ident);
+            )
             }
         })
         .collect::<Vec<_>>();

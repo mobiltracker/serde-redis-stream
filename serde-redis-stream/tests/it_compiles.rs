@@ -4,8 +4,9 @@ use serde_redis_stream_interface::RedisStreamSerializable;
 #[derive(RedisStreamSerialize)]
 struct Foobar {
     name: String,
-    age: i64,
     #[serialize = "bincode"]
+    age: i64,
+    #[serialize = "json"]
     lat: f64,
 }
 

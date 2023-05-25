@@ -12,6 +12,7 @@ syn = {version = "2", flags = ["full"]}
 quote = "1"
 darling = "0.20"
 bincode = "1"
+serde_json = "1"
 
 serde-redis-stream-interface = {path = "../serde-redis-stream-interface"}
 
