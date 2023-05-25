@@ -1,3 +1,5 @@
+use redis::streams::StreamKey;
+
 struct Foobar {
     pub name: String, // ToRedisArgs
     pub age: i64,
@@ -5,6 +7,7 @@ struct Foobar {
 
 pub trait RedisStreamSerializable {
     fn redis_serialize(&self, stream_name: &str, id: &str) -> redis::Cmd;
+    fn redis_deserialize(value: StreamKey) -> Self;
 }
 
 impl RedisStreamSerializable for Foobar {
@@ -19,6 +22,10 @@ impl RedisStreamSerializable for Foobar {
             .arg(self.age);
 
         cmd
+    }
+
+    fn redis_deserialize(value: StreamKey) -> Self {
+        todo!()
     }
 }
 
