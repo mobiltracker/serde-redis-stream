@@ -1,6 +1,6 @@
 use redis::streams::StreamKey;
 
-struct Foobar {
+pub struct Foobar {
     pub name: String, // ToRedisArgs
     pub age: i64,
 }
@@ -25,7 +25,23 @@ impl RedisStreamSerializable for Foobar {
     }
 
     fn redis_deserialize(value: StreamKey) -> Self {
-        todo!()
+        let ids = value.ids;
+
+        let map = &ids.first().unwrap().map;
+
+        let name = match map.get("name").unwrap() {
+            redis::Value::Int(data) => data,
+            _ => unimplemented!(),
+        };
+        let age = match map.get("age").unwrap() {
+            redis::Value::Int(data) => *data,
+            _ => unimplemented!(),
+        };
+
+        Foobar {
+            name: name.to_string(),
+            age,
+        }
     }
 }
 
