@@ -1,4 +1,8 @@
-use redis::{streams::StreamReadOptions, Pipeline};
+use redis::{
+    pipe,
+    streams::{StreamKey, StreamReadOptions, StreamReadReply},
+    AsyncCommands, Pipeline,
+};
 
 fn main() {
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -21,6 +25,7 @@ async fn main_async() {
         .await
         .unwrap();
 
+    let a: String = redis_connection.hget("foobar", "foobar").await.unwrap();
     // match foobar
     //     .redis_serialize("foobar", "*")
     //     .query_async::<redis::aio::MultiplexedConnection, ()>(&mut redis_connection)
@@ -35,10 +40,9 @@ async fn main_async() {
     let opts = StreamReadOptions::default().count(1);
     pipeline.xread_options(&["foobar"], &["0"], &opts);
 
-    match pipeline
-        .query_async::<redis::aio::MultiplexedConnection, redis::Value>(&mut redis_connection)
-        .await
-    {
+    let a: StreamReadReply = pipeline.query_async(&mut redis_connection).await.unwrap();
+
+    match pipeline.query_async(&mut redis_connection).await {
         Ok(value) => {
             match value {
                 redis::Value::Nil => todo!(),

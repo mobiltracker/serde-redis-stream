@@ -75,6 +75,10 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
             .map(|field| {
                 let f_ident = field.ident.expect("struct fields must have ident");
                 let f_lit = f_ident.to_string();
+                let f_type = match field.ty{
+                    syn::Type::Path(not_type) => not_type.path.get_ident().map(|value| value.to_owned()).unwrap(),
+                    _ => unimplemented!(),
+                };
                 
                 let attrs = field.attrs.iter().find(|a| match &a.meta {
                     syn::Meta::NameValue(nv) => {
@@ -116,10 +120,8 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     }
                 } else {
                     quote!(                        
-                        let &self.#f_ident = match map.get(#f_lit).unwrap() {
-                            redis::Value::Int(data) => data,
-                            _ => unimplemented!(),
-                        };
+                        let value: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
+                        let value = <#f_type as redis::FromRedisValue>::from_redis_value(value).expect("TODO DESERIALIZE").expect("TODO NO VALUE");
                     )
                 }
             })
