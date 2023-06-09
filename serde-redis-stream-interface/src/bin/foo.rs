@@ -1,8 +1,4 @@
-use redis::{
-    streams::{StreamKey, StreamReadOptions},
-    Pipeline,
-};
-use serde_redis_stream_interface::{Foobar, RedisStreamSerializable};
+use redis::{streams::StreamReadOptions, Pipeline};
 
 fn main() {
     let runtime = tokio::runtime::Builder::new_multi_thread()
