@@ -100,13 +100,13 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                 match serialization_method.as_str() {
                     "bincode" => {
                         quote!(
-                            let #f_ident: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
+                            let #f_ident = map.get(#f_lit).expect("TODO DICTIONARY");
                             let #f_ident = bincode::deserialize(&self.#f_ident).expect("Failed to deserialize from bincode");
                         )
                     }
                     "json" => {
                         quote!(
-                            let #f_ident: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
+                            let #f_ident = map.get(#f_lit).expect("TODO DICTIONARY");
                             let #f_ident: = serde_json::from_str(&self.#f_ident).expect("Failed to deserialize from json");
                         )
                     }
