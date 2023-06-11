@@ -64,86 +64,79 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
 
-        let fields_for_serialization = match data.clone() {
-            syn::Data::Struct(s) => s.fields,
-            syn::Data::Enum(_) => panic!("Not supported"),
-            syn::Data::Union(_) => panic!("Not supported"),
-        }
-        .into_iter();
+    let fields_for_serialization = match data.clone() {
+        syn::Data::Struct(s) => s.fields,
+        syn::Data::Enum(_) => panic!("Not supported"),
+        syn::Data::Union(_) => panic!("Not supported"),
+    }
+    .into_iter();
     
-        let fields_for_serialization = fields_for_serialization
-            .map(|field| {
-                let f_ident = field.ident.expect("struct fields must have ident");
-                let f_lit = f_ident.to_string();
-                let f_type = match field.ty{
-                    syn::Type::Path(not_type) => not_type.path.get_ident().map(|value| value.to_owned()).unwrap(),
-                    _ => unimplemented!(),
-                };
-                
-                let attrs = field.attrs.iter().find(|a| match &a.meta {
-                    syn::Meta::NameValue(nv) => {
-                        &nv.path.get_ident().unwrap().to_string() == "serialize"
-                    }
-                    _ => false,
-                });
-    
-                if let Some(serialize) = attrs {
-                    let serialization_method = match &serialize.meta {
-                        syn::Meta::NameValue(nv) => match &nv.value {
-                            syn::Expr::Lit(lit) => match &lit.lit {
-                                syn::Lit::Str(lit) => lit.value(),
-                                _ => unimplemented!(),
-                            },
+    let fields_for_serialization = fields_for_serialization
+        .map(|field| {
+            let f_ident = field.ident.expect("struct fields must have ident");
+            let f_lit = f_ident.to_string();
+            let f_type = match field.ty{
+                syn::Type::Path(not_type) => not_type.path.get_ident().map(|value| value.to_owned()).unwrap(),
+                _ => unimplemented!(),
+            };
+
+            let attrs = field.attrs.iter().find(|a| match &a.meta {
+                syn::Meta::NameValue(nv) => {
+                    &nv.path.get_ident().unwrap().to_string() == "serialize"
+                }
+                _ => false,
+            });
+            if let Some(serialize) = attrs {
+                let serialization_method = match &serialize.meta {
+                    syn::Meta::NameValue(nv) => match &nv.value {
+                        syn::Expr::Lit(lit) => match &lit.lit {
+                            syn::Lit::Str(lit) => lit.value(),
                             _ => unimplemented!(),
                         },
                         _ => unimplemented!(),
-                    };
-    
-                    match serialization_method.as_str() {
-                        "bincode" => {
-                            quote!(
-                                let &self.#f_ident = match map.get(#f_lit).unwrap() {
-                                    redis::Value::Int(data) => bincode::deserialize(&self.#f_ident).expect("Failed to deserialize from bincode");,
-                                    _ => unimplemented!(),
-                                };
-                            )
-                        }
-                        "json" => {
-                            quote!(
-                                let &self.#f_ident = match map.get(#f_lit).unwrap() {
-                                    redis::Value::Int(data) => serde_json::from_str(&self.#f_ident).expect("Failed to deserialize from json"),
-                                    _ => unimplemented!(),
-                                };
-                            )
-                        }
-                        _ => panic!("Invalid serialization method {}", serialization_method),
+                    },
+                    _ => unimplemented!(),
+                };
+                match serialization_method.as_str() {
+                    "bincode" => {
+                        quote!(
+                            let #f_ident: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
+                            let #f_ident = bincode::deserialize(&self.#f_ident).expect("Failed to deserialize from bincode");
+                        )
                     }
-                } else {
-                    quote!(                        
-                        let value: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
-                        let value = <#f_type as redis::FromRedisValue>::from_redis_value(value).expect("TODO DESERIALIZE").expect("TODO NO VALUE");
-                    )
+                    "json" => {
+                        quote!(
+                            let #f_ident: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
+                            let #f_ident: = serde_json::from_str(&self.#f_ident).expect("Failed to deserialize from json");
+                        )
+                    }
+                    _ => panic!("Invalid serialization method {}", serialization_method),
                 }
-            })
-            .collect::<Vec<_>>();
-
-            let fields_struct = match data.clone() {
-                syn::Data::Struct(s) => s.fields,
-                syn::Data::Enum(_) => panic!("Not supported"),
-                syn::Data::Union(_) => panic!("Not supported"),
+            } else {
+                quote!(                        
+                    let #f_ident: redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
+                    let #f_ident = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).expect("TODO DESERIALIZE").expect("TODO NO VALUE");
+                )
             }
-            .into_iter();
-        
-            let fields_struct = fields_struct
-                .map(|field| {
-                    let f_ident = field.ident.expect("struct fields must have ident");
-                    let f_lit = f_ident.to_string();
-        
-                    quote!(                        
-                        #f_lit: &self.#f_ident,
-                    )
-                })
-                .collect::<Vec<_>>();
+        })
+    .collect::<Vec<_>>();    
+
+    let fields_struct = match data.clone() {
+        syn::Data::Struct(s) => s.fields,
+        syn::Data::Enum(_) => panic!("Not supported"),
+        syn::Data::Union(_) => panic!("Not supported"),
+    }
+    .into_iter();
+    
+    let fields_struct = fields_struct
+        .map(|field| {
+            let f_ident = field.ident.expect("struct fields must have ident");
+    
+            quote!(                        
+                #f_ident,
+            )
+        })
+    .collect::<Vec<_>>();       
 
     let expanded = quote! {
         impl serde_redis_stream_interface::RedisStreamSerializable for #ident {
@@ -159,10 +152,10 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                 let map = &ids.first().unwrap().map;
 
                 #(#fields_for_serialization)*
-
+                
                 #ident {
-                    #(#fields_struct)*
-                }
+                    #(#fields_struct)*    
+                }            
             }
         }
     };
