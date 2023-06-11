@@ -1,8 +1,5 @@
-use redis::{
-    pipe,
-    streams::{StreamKey, StreamReadOptions, StreamReadReply},
-    AsyncCommands, Pipeline,
-};
+use redis::{streams::StreamReadReply, Pipeline};
+use serde_redis_stream_interface::{Foobar, RedisStreamSerializable};
 
 fn main() {
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -14,153 +11,29 @@ fn main() {
 }
 
 async fn main_async() {
+    let redis_client = redis::Client::open("redis://127.0.0.1/0").unwrap();
+
     // let foobar = Foobar {
-    //     age: 23,
-    //     name: "amanda".to_string(),
+    //     name: "original".to_string(),
+    //     age: 100,
     // };
 
-    let redis_client = redis::Client::open("redis://127.0.0.1").unwrap();
+    // let mut redis_connection = redis_client;
+    // let a = foobar.redis_serialize("lixo", "*");
+    // a.execute(&mut redis_connection);
+
     let mut redis_connection = redis_client
         .get_multiplexed_tokio_connection()
         .await
         .unwrap();
 
-    let a: String = redis_connection.hget("foobar", "foobar").await.unwrap();
-    // match foobar
-    //     .redis_serialize("foobar", "*")
-    //     .query_async::<redis::aio::MultiplexedConnection, ()>(&mut redis_connection)
-    //     .await
-    // {
-    //     Ok(_) => (),
-    //     Err(_) => println!("Erro complicado"),
-    // };
-
     let mut pipeline = Pipeline::new();
 
-    let opts = StreamReadOptions::default().count(1);
-    pipeline.xread_options(&["foobar"], &["0"], &opts);
+    pipeline.xread(&["lixo"], &["0"]);
 
     let a: StreamReadReply = pipeline.query_async(&mut redis_connection).await.unwrap();
 
-    match pipeline.query_async(&mut redis_connection).await {
-        Ok(value) => {
-            match value {
-                redis::Value::Nil => todo!(),
-                redis::Value::Int(_) => todo!(),
-                redis::Value::Data(_) => todo!(),
-                redis::Value::Bulk(values) => {
-                    for value in values {
-                        println!("################################\n");
-                        match value {
-                            redis::Value::Nil => todo!(),
-                            redis::Value::Int(_) => todo!(),
-                            redis::Value::Data(_) => todo!(),
-                            redis::Value::Bulk(values) => {
-                                for value in values {
-                                    println!("-----------------------------------\n");
-                                    match value {
-                                        redis::Value::Nil => todo!(),
-                                        redis::Value::Int(_) => todo!(),
-                                        redis::Value::Data(_) => todo!(),
-                                        redis::Value::Bulk(values) => {
-                                            for value in values {
-                                                println!("***********************************\n");
-                                                match value {
-                                                    redis::Value::Nil => todo!(),
-                                                    redis::Value::Int(_) => todo!(),
-                                                    redis::Value::Data(value) => {
-                                                        match std::str::from_utf8(&value) {
-                                                            Ok(value) => {
-                                                                println!("Resultado Primeiro Nível: {:#?}", value)
-                                                            }
-                                                            Err(_) => todo!(),
-                                                        }
-                                                    }
-                                                    redis::Value::Bulk(values) => {
-                                                        for value in values {
-                                                            match value {
-                                                                redis::Value::Nil => todo!(),
-                                                                redis::Value::Int(_) => todo!(),
-                                                                redis::Value::Data(_) => todo!(),
-                                                                redis::Value::Bulk(values) => {
-                                                                    for value in values {
-                                                                        match value {
-                                                                        redis::Value::Nil => todo!(),
-                                                                        redis::Value::Int(_) => todo!(),
-                                                                        redis::Value::Data(value) => {
-                                                                            match std::str::from_utf8(&value) {
-                                                                                Ok(value) => {
-                                                                                    println!("Resultado Segundo Nível: {:#?}", value)
-                                                                                }
-                                                                                Err(_) => todo!(),
-                                                                            }
-                                                                        }
-                                                                        redis::Value::Bulk(values) => {
-                                                                            for value in values {
-                                                                                match value {
-                                                                                    redis::Value::Nil => todo!(),
-                                                                                    redis::Value::Int(_) => todo!(),
-                                                                                    redis::Value::Data(value) => {
-                                                                                        match std::str::from_utf8(&value) {
-                                                                                            Ok(value) => {
-                                                                                                println!("Resultado Terceiro Nível: {:#?}", value)
-                                                                                            }
-                                                                                            Err(_) => todo!(),
-                                                                                        }
-                                                                                    }
-                                                                                    redis::Value::Bulk(values) => {
-                                                                                        for value in values {
-                                                                                            match value {
-                                                                                                redis::Value::Nil => todo!(),
-                                                                                                redis::Value::Int(_) => todo!(),
-                                                                                                redis::Value::Data(value) => {
-                                                                                                    match std::str::from_utf8(&value) {
-                                                                                                        Ok(value) => {
-                                                                                                            println!("Resultado Quarto Nível: {:#?}", value)
-                                                                                                        }
-                                                                                                        Err(_) => todo!(),
-                                                                                                    }
-                                                                                                }
-                                                                                                redis::Value::Bulk(_) => todo!(),
-                                                                                                redis::Value::Status(_) => todo!(),
-                                                                                                redis::Value::Okay => todo!(),
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                    redis::Value::Status(_) => todo!(),
-                                                                                    redis::Value::Okay => todo!(),
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                        redis::Value::Status(_) => todo!(),
-                                                                        redis::Value::Okay => todo!(),
-                                                                    }
-                                                                    }
-                                                                }
-                                                                redis::Value::Status(_) => todo!(),
-                                                                redis::Value::Okay => todo!(),
-                                                            }
-                                                        }
-                                                    }
-                                                    redis::Value::Status(_) => todo!(),
-                                                    redis::Value::Okay => todo!(),
-                                                }
-                                            }
-                                        }
-                                        redis::Value::Status(_) => todo!(),
-                                        redis::Value::Okay => todo!(),
-                                    }
-                                }
-                            }
-                            redis::Value::Status(_) => todo!(),
-                            redis::Value::Okay => todo!(),
-                        }
-                    }
-                }
-                redis::Value::Status(_) => todo!(),
-                redis::Value::Okay => todo!(),
-            }
-        }
-        Err(err) => println!("Erro: {:#?}", err),
-    };
+    let foobar = Foobar::redis_deserialize(a.keys.first().unwrap().clone());
+
+    println!("Resultado: {:#?}", foobar);
 }

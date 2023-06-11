@@ -1,5 +1,6 @@
 use redis::{streams::StreamKey, FromRedisValue};
 
+#[derive(Debug)]
 pub struct Foobar {
     pub name: String, // ToRedisArgs
     pub age: i64,
