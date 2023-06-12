@@ -121,7 +121,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
         })
     .collect::<Vec<_>>();    
 
-    let fields_struct = match data.clone() {
+    let fields_struct = match data{
         syn::Data::Struct(s) => s.fields,
         syn::Data::Enum(_) => panic!("Not supported"),
         syn::Data::Union(_) => panic!("Not supported"),
