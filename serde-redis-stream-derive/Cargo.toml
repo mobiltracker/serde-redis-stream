@@ -1,5 +1,5 @@
 [package]
-name = "serde-redis-stream"
+name = "serde-redis-stream-derive"
 version = "0.0.1"
 authors = ["mlcruz1 <mlcruz@inf.ufrgs.br>"]
 edition = "2021"

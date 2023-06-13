@@ -5,6 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
 [dependencies]
 redis = "0.23.0"
 serde = "1.0"
+syn = {version = "2", flags = ["full"]}
+quote = "1"
+darling = "0.20"
+bincode = "1"
+serde_json = "1"
+
+serde-redis-stream-interface = {path = "../serde-redis-stream-interface"}
+serde-redis-stream-derive = {path = "../serde-redis-stream-derive"}

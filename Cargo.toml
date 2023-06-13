@@ -14,4 +14,4 @@ darling = "0.20"
 
 [lib]
 proc-macro = true
-path = "./serde-redis-stream/src/lib.rs"
+path = "./serde-redis-stream-derive/src/lib.rs"
