@@ -148,7 +148,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                 #(#fields)*
                 cmd
             }
-            fn redis_deserialize(value: redis::streams::StreamKey) -> Self {
+            fn redis_deserialize(value: redis::streams::StreamKey) -> Result<Self, serde_redis_stream_interface::RedisStreamDeriveError> {
                 let ids = value.ids;
                 let map = &ids.first().ok_or(serde_redis_stream_interface::RedisStreamDeriveError::InvalidItemOnStreamKey)?.map;
 
