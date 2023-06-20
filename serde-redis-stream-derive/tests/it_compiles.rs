@@ -1,5 +1,5 @@
-use redis::streams::StreamKey;
-use serde_redis_stream::RedisStreamSerialize;
+use serde_redis_stream_derive::RedisStreamSerialize;
+use serde_redis_stream_interface::RedisStreamSerializable;
 
 #[derive(RedisStreamSerialize)]
 struct Foobar {
