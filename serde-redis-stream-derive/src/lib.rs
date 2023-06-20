@@ -142,7 +142,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     ("bincode",false) => {
                         quote!(
                             let #f_ident: &redis::Value = map.get(#f_lit).ok_or_else(|| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
-                            let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;              
+                            let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToVecU8(String::from(#f_lit)))?;              
                             let #f_ident = bincode::deserialize(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromBincode(String::from(#f_lit)))?;
                         )
                     }
@@ -151,7 +151,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             let #f_ident = map.get(#f_lit);
                             let #f_ident  = match #f_ident {
                                 Some(#f_ident) => {
-                                    let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;              
+                                    let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToVecU8(String::from(#f_lit)))?;              
                                     Some(bincode::deserialize(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromBincode(String::from(#f_lit)))?)
                                 }
                                 None => {
@@ -163,7 +163,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     ("json",false) => {
                         quote!(
                             let #f_ident: &redis::Value = map.get(#f_lit).ok_or_else(|| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
-                            let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                            let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToString(String::from(#f_lit)))?;
                             let #f_ident = serde_json::from_str(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromJSON(String::from(#f_lit)))?;
                         )
                     }
@@ -172,7 +172,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             let #f_ident = map.get(#f_lit);
                             let #f_ident = match #f_ident {
                                 Some(#f_ident) => {
-                                    let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                                    let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToString(String::from(#f_lit)))?;
                                     Some(serde_json::from_str(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromJSON(String::from(#f_lit)))?)
                                 }
                                 None => {
@@ -190,7 +190,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             let #f_ident = map.get(#f_lit);
                             let #f_ident = match #f_ident {
                                 Some(#f_ident) => {
-                                    let val = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                                    let val = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValue(String::from(#f_lit)))?;
                                     Some(val)
                                 }
                                 None => {
@@ -202,7 +202,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     false => {
                         quote!(                        
                             let #f_ident: &redis::Value = map.get(#f_lit).ok_or_else(|| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
-                            let #f_ident = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                            let #f_ident = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValue(String::from(#f_lit)))?;
                         )
                     }
                 }
