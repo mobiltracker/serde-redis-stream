@@ -87,9 +87,9 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     .iter()
                     .any(|s| segments_str == s); 
 
-                    let temp;
+                    
 
-                    if is_option {
+                    let temp = if is_option {
                         let option_segment = ["Option", "std:option:Option", "core:option:Option"]
                         .iter()
                         .find(|s| segments_str == *s)
@@ -108,13 +108,13 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             _ => None,
                         });
 
-                        temp = match inner_type{
+                        match inner_type{
                             Some(syn::Type::Path(not_type)) => not_type.path.get_ident().map(|value| value.to_owned()).unwrap(),
                             _ => unimplemented!(),
                         }
                     }else{
-                        temp = not_type.path.get_ident().map(|value| value.to_owned()).unwrap();
-                    }
+                        not_type.path.get_ident().map(|value| value.to_owned()).unwrap()
+                    };
 
                     (temp,is_option)
                 },
