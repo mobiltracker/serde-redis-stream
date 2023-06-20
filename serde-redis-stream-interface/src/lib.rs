@@ -11,6 +11,10 @@ pub enum RedisStreamDeriveError {
     DeserializationErrorFromBincode(String),
     #[error("Error in deserialization from JSON value in: `{0}`")]
     DeserializationErrorFromJSON(String),
+    #[error("Error in serialization to bincode in: `{0}`")]
+    SerializationErrorToBincode(String),
+    #[error("Error in serialization to JSON in: `{0}`")]
+    SerializationErrorToJSON(String),
     #[error("Item on StreamKey is invalid.")]
     InvalidItemOnStreamKey,
 }

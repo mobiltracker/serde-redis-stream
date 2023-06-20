@@ -41,14 +41,14 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                 match serialization_method.as_str() {
                     "bincode" => {
                         quote!(
-                            let encoded: Vec<u8> = bincode::serialize(&self.#f_ident).expect("Failed to serialize to bincode");
+                            let encoded: Vec<u8> = bincode::serialize(&self.#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::SerializationErrorToBincode(String::from(#f_lit)))?;
                             cmd.arg(#f_lit);
                             cmd.arg(encoded);
                         )
                     }
                     "json" => {
                         quote!(
-                            let encoded = serde_json::to_string(&self.#f_ident).expect("Failed to serialize to json");
+                            let encoded = serde_json::to_string(&self.#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::SerializationErrorToJSON(String::from(#f_lit)))?;
                             cmd.arg(#f_lit);
                             cmd.arg(encoded);
                         )
