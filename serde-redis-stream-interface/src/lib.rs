@@ -26,12 +26,20 @@ pub struct Foobar {
 }
 
 pub trait RedisStreamSerializable: Sized {
-    fn redis_serialize(&self, stream_name: &str, id: &str) -> redis::Cmd;
+    fn redis_serialize(
+        &self,
+        stream_name: &str,
+        id: &str,
+    ) -> Result<redis::Cmd, RedisStreamDeriveError>;
     fn redis_deserialize(value: StreamKey) -> Result<Self, RedisStreamDeriveError>;
 }
 
 impl RedisStreamSerializable for Foobar {
-    fn redis_serialize(&self, stream_name: &str, id: &str) -> redis::Cmd {
+    fn redis_serialize(
+        &self,
+        stream_name: &str,
+        id: &str,
+    ) -> Result<redis::Cmd, RedisStreamDeriveError> {
         let mut cmd: redis::Cmd = redis::cmd("XADD");
 
         cmd.arg(stream_name)
@@ -41,7 +49,7 @@ impl RedisStreamSerializable for Foobar {
             .arg("age")
             .arg(self.age);
 
-        cmd
+        Ok(cmd)
     }
 
     fn redis_deserialize(value: StreamKey) -> Result<Self, RedisStreamDeriveError> {

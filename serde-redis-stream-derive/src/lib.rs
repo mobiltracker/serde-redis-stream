@@ -148,11 +148,11 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     }
                     ("bincode",true) => {
                         quote!(
-                            let #f_ident: &redis::Value = map.get(#f_lit).ok();
+                            let #f_ident = map.get(#f_lit);
                             let #f_ident  = match #f_ident {
                                 Some(#f_ident) => {
                                     let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;              
-                                    bincode::deserialize(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromBincode(String::from(#f_lit)))?
+                                    Some(bincode::deserialize(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromBincode(String::from(#f_lit)))?)
                                 }
                                 None => {
                                     None
@@ -169,11 +169,11 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     }
                     ("json",true) => {
                         quote!(
-                            let #f_ident: &redis::Value = map.get(#f_lit).ok();
+                            let #f_ident = map.get(#f_lit);
                             let #f_ident = match #f_ident {
                                 Some(#f_ident) => {
                                     let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
-                                    serde_json::from_str(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromJSON(String::from(#f_lit)))?
+                                    Some(serde_json::from_str(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromJSON(String::from(#f_lit)))?)
                                 }
                                 None => {
                                     None
@@ -187,10 +187,11 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                 match is_option{
                     true => {
                         quote!(
-                            let #f_ident: &redis::Value = map.get(#f_lit).ok();
+                            let #f_ident = map.get(#f_lit);
                             let #f_ident = match #f_ident {
                                 Some(#f_ident) => {
-                                    <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?
+                                    let val = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                                    Some(val)
                                 }
                                 None => {
                                     None
@@ -229,11 +230,11 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl serde_redis_stream_interface::RedisStreamSerializable for #ident {
-            fn redis_serialize(&self, stream_name: &str, id: &str) -> redis::Cmd {
+            fn redis_serialize(&self, stream_name: &str, id: &str) -> Result<redis::Cmd, serde_redis_stream_interface::RedisStreamDeriveError>{
                 let mut cmd: redis::Cmd = redis::cmd("XADD");
                 cmd.arg(stream_name).arg(id);
                 #(#fields)*
-                cmd
+                Ok(cmd)
             }
             fn redis_deserialize(value: redis::streams::StreamKey) -> Result<Self, serde_redis_stream_interface::RedisStreamDeriveError> {
                 let ids = value.ids;
@@ -241,9 +242,9 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
 
                 #(#fields_for_serialization)*
                 
-                #ident {
+                Ok(#ident {
                     #(#fields_struct)*    
-                }            
+                })          
             }
         }
     };
