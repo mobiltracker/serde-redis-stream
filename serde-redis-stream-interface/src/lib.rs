@@ -7,6 +7,10 @@ pub enum RedisStreamDeriveError {
     MissingFieldFromHashMap(String),
     #[error("Error in deserialization from redis value in: `{0}`")]
     DeserializationErrorFromRedisValue(String),
+    #[error("Error in deserialization from bincode value in: `{0}`")]
+    DeserializationErrorFromBincode(String),
+    #[error("Error in deserialization from JSON value in: `{0}`")]
+    DeserializationErrorFromJSON(String),
     #[error("Item on StreamKey is invalid.")]
     InvalidItemOnStreamKey,
 }

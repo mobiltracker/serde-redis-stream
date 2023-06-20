@@ -100,24 +100,24 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                 match serialization_method.as_str() {
                     "bincode" => {
                         quote!(
-                            let #f_ident: &redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
-                            let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).expect("TODO DESERIALIZE");                
-                            let #f_ident = bincode::deserialize(&#f_ident).expect("Failed to deserialize from bincode");
+                            let #f_ident: &redis::Value = map.get(#f_lit).ok_or_else(|| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                            let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;              
+                            let #f_ident = bincode::deserialize(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromBincode(String::from(#f_lit)))?;
                         )
                     }
                     "json" => {
                         quote!(
-                            let #f_ident: &redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
-                            let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).expect("TODO DESERIALIZE");
-                            let #f_ident = serde_json::from_str(&#f_ident).expect("Failed to deserialize from json");
+                            let #f_ident: &redis::Value = map.get(#f_lit).ok_or_else(|| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                            let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                            let #f_ident = serde_json::from_str(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromJSON(String::from(#f_lit)))?;
                         )
                     }
                     _ => panic!("Invalid serialization method {}", serialization_method),
                 }
             } else {
                 quote!(                        
-                    let #f_ident: &redis::Value = map.get(#f_lit).expect("TODO DICTIONARY");
-                    let #f_ident = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).expect("TODO DESERIALIZE");
+                    let #f_ident: &redis::Value = map.get(#f_lit).ok_or_else(|| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
+                    let #f_ident = <#f_type as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::MissingFieldFromHashMap(String::from(#f_lit)))?;
                 )
             }
         })
@@ -150,7 +150,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
             }
             fn redis_deserialize(value: redis::streams::StreamKey) -> Self {
                 let ids = value.ids;
-                let map = &ids.first().unwrap().map;
+                let map = &ids.first().ok_or(serde_redis_stream_interface::RedisStreamDeriveError::InvalidItemOnStreamKey)?.map;
 
                 #(#fields_for_serialization)*
                 
