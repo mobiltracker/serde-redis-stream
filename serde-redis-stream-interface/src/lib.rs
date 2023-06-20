@@ -1,4 +1,11 @@
 use redis::{streams::StreamKey, FromRedisValue};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum RedisStreamDeriveError {
+    #[error("Field in hash maps wasn't found: `{0}`")]
+    MissingFieldFromHashMap(String),
+}
 
 #[derive(Debug)]
 pub struct Foobar {
@@ -6,9 +13,9 @@ pub struct Foobar {
     pub age: i64,
 }
 
-pub trait RedisStreamSerializable {
+pub trait RedisStreamSerializable: Sized {
     fn redis_serialize(&self, stream_name: &str, id: &str) -> redis::Cmd;
-    fn redis_deserialize(value: StreamKey) -> Self;
+    fn redis_deserialize(value: StreamKey) -> Result<Self, RedisStreamDeriveError>;
 }
 
 impl RedisStreamSerializable for Foobar {
@@ -25,17 +32,16 @@ impl RedisStreamSerializable for Foobar {
         cmd
     }
 
-    fn redis_deserialize(value: StreamKey) -> Self {
+    fn redis_deserialize(value: StreamKey) -> Result<Self, RedisStreamDeriveError> {
         let ids = value.ids;
 
         let map = &ids.first().unwrap().map;
 
-        let name = map
+        let name: &redis::Value = map
             .get("name")
-            .map(String::from_redis_value)
-            .transpose()
-            .expect("TODO - DESERIALIZATION")
-            .expect("TODO - NO STRING");
+            .ok_or_else(|| RedisStreamDeriveError::MissingFieldFromHashMap(String::from("name")))?;
+        let name: String =
+            <String as redis::FromRedisValue>::from_redis_value(name).expect("TODO DESERIALIZE");
 
         let age = map
             .get("age")
@@ -44,7 +50,7 @@ impl RedisStreamSerializable for Foobar {
             .expect("TODO - DESERIALIZATION")
             .expect("TODO - NO STRING");
 
-        Foobar { name, age }
+        Ok(Foobar { name, age })
     }
 }
 
