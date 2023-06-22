@@ -7,11 +7,11 @@ use serde_redis_stream_interface::RedisStreamSerializable;
 fn it_works_option_some() {
     #[derive(Debug, RedisStreamSerialize, PartialEq, Eq)]
     struct Foobar {
-        name: Option<String>,
+        name: Option<i64>,
         #[serialize = "bincode"]
         age: Option<i64>,
         #[serialize = "json"]
-        foobar: Option<bool>,
+        foobar: Option<i64>,
     }
 
     let redis_client = redis::Client::open("redis://127.0.0.1/0").unwrap();
@@ -20,9 +20,9 @@ fn it_works_option_some() {
     let _: () = redis_connection.del("gambiarra7").unwrap();
 
     let foobar = Foobar {
-        name: Some("tal".to_string()),
-        age: Some(100),
-        foobar: Some(true),
+        name: Some(1),
+        age: Some(1),
+        foobar: Some(1),
     };
 
     let a = foobar.redis_serialize("gambiarra7", "*").unwrap();

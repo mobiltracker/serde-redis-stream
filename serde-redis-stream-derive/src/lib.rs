@@ -18,6 +18,22 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
         .map(|field| {
             let f_ident = field.ident.expect("struct fields must have ident");
             let f_lit = f_ident.to_string();
+            let is_option = match field.ty{
+                syn::Type::Path(not_type) => {                   
+                    let segments_str = &not_type.path.segments
+                    .iter()
+                    .map(|segment| segment.ident.to_string())
+                    .collect::<Vec<_>>()
+                    .join(":");                 
+
+                    let is_option = ["Option", "std:option:Option", "core:option:Option"]
+                    .iter()
+                    .any(|s| segments_str == s); 
+                    
+                    is_option
+                },
+                _ => unimplemented!(),
+            };   
             
             let attrs = field.attrs.iter().find(|a| match &a.meta {
                 syn::Meta::NameValue(nv) => {
@@ -56,10 +72,26 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                     _ => panic!("Invalid serialization method {}", serialization_method),
                 }
             } else {
-                quote!(
-                cmd.arg(#f_lit);
-                cmd.arg(&self.#f_ident);
-            )
+                match is_option {
+                    true => {                        
+                        quote!(
+                            let field = &self.#f_ident;
+                            match field {
+                                Some(value) => {
+                                    cmd.arg(#f_lit);
+                                    cmd.arg(value);
+                                }
+                                None => (),
+                            }                            
+                        )
+                    }
+                    false => {
+                        quote!(
+                            cmd.arg(#f_lit);
+                            cmd.arg(&self.#f_ident);
+                        )
+                    }
+                }
             }
         })
         .collect::<Vec<_>>();
@@ -153,7 +185,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                                 Some(#f_ident) => {
                                     let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToVecU8(String::from(#f_lit)))?;              
                                     match bincode::deserialize(&#f_ident) {
-                                        Ok(value) => Some(value),
+                                        Ok(value) => value,
                                         Err(_) => None,
                                     }
                                 }
@@ -177,7 +209,7 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                                 Some(#f_ident) => {
                                     let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToString(String::from(#f_lit)))?;
                                     match serde_json::from_str(&#f_ident) {
-                                        Ok(value) => Some(value),
+                                        Ok(value) => value,
                                         Err(_) => None,
                                     }
                                 }
