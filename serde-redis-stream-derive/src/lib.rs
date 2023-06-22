@@ -152,7 +152,10 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             let #f_ident  = match #f_ident {
                                 Some(#f_ident) => {
                                     let #f_ident = <Vec<u8> as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToVecU8(String::from(#f_lit)))?;              
-                                    Some(bincode::deserialize(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromBincode(String::from(#f_lit)))?)
+                                    match bincode::deserialize(&#f_ident) {
+                                        Ok(value) => Some(value),
+                                        Err(_) => None,
+                                    }
                                 }
                                 None => {
                                     None
@@ -173,7 +176,10 @@ pub fn redis_stream_serialize(input: TokenStream) -> TokenStream {
                             let #f_ident = match #f_ident {
                                 Some(#f_ident) => {
                                     let #f_ident = <String as redis::FromRedisValue>::from_redis_value(#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromRedisValueToString(String::from(#f_lit)))?;
-                                    Some(serde_json::from_str(&#f_ident).map_err(|_| serde_redis_stream_interface::RedisStreamDeriveError::DeserializationErrorFromJSON(String::from(#f_lit)))?)
+                                    match serde_json::from_str(&#f_ident) {
+                                        Ok(value) => Some(value),
+                                        Err(_) => None,
+                                    }
                                 }
                                 None => {
                                     None
