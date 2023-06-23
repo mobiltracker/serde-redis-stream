@@ -3,18 +3,18 @@ use serde_redis_stream_interface::RedisStreamSerializable;
 
 #[derive(RedisStreamSerialize)]
 struct Foobar {
-    name: String,
+    name: Option<String>,
     #[serialize = "bincode"]
-    age: i64,
+    age: Option<i64>,
     #[serialize = "json"]
-    lat: f64,
+    lat: Option<f64>,
 }
 
 fn main() {
     let foobar = Foobar {
-        name: "foobar".to_string(),
-        age: 10,
-        lat: 10.0,
+        name: Some("foobar".to_string()),
+        age: Some(10),
+        lat: Some(10.0),
     };
 
     foobar.redis_serialize("foobar", "*").unwrap();
